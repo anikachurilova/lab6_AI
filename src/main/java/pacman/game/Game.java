@@ -467,7 +467,7 @@ public final class Game {
 		if(!canBeForwarded()) return;
 		_updatePacMan(pacManMove);                    //move pac-man
 		_eatPill();                                    //eat a pill
-		_eatPowerPill();                            //eat a power pill
+		//_eatPowerPill();                            //eat a power pill
 	}
 
 	/**
@@ -673,27 +673,27 @@ public final class Game {
 	/**
 	 * _eat power pill.
 	 */
-	private void _eatPowerPill() {
-		powerPillWasEaten = false;
-
-		int powerPillIndex = currentMaze.graph[pacman.currentNodeIndex].powerPillIndex;
-
-		if (powerPillIndex >= 0 && powerPills.get(powerPillIndex)) {
-			score += POWER_PILL;
-			ghostEatMultiplier = 1;
-			powerPills.clear(powerPillIndex);
-
-			int newEdibleTime = (int) (EDIBLE_TIME * (Math.pow(EDIBLE_TIME_REDUCTION, levelCount % LEVEL_RESET_REDUCTION)));
-
-			for (Ghost ghost : ghosts.values())
-				if (ghost.lairTime == 0)
-					ghost.edibleTime = newEdibleTime;
-				else
-					ghost.edibleTime = 0;
-
-			powerPillWasEaten = true;
-		}
-	}
+//	private void _eatPowerPill() {
+//		powerPillWasEaten = false;
+//
+//		int powerPillIndex = currentMaze.graph[pacman.currentNodeIndex].powerPillIndex;
+//
+//		if (powerPillIndex >= 0 && powerPills.get(powerPillIndex)) {
+//			score += POWER_PILL;
+//			ghostEatMultiplier = 1;
+//			powerPills.clear(powerPillIndex);
+//
+//			int newEdibleTime = (int) (EDIBLE_TIME * (Math.pow(EDIBLE_TIME_REDUCTION, levelCount % LEVEL_RESET_REDUCTION)));
+//
+//			for (Ghost ghost : ghosts.values())
+//				if (ghost.lairTime == 0)
+//					ghost.edibleTime = newEdibleTime;
+//				else
+//					ghost.edibleTime = 0;
+//
+//			powerPillWasEaten = true;
+//		}
+//	}
 
 	private boolean _reverseGhosts(EnumMap<GHOST, MOVE> moves, boolean force) {
 		boolean reversed = false;
