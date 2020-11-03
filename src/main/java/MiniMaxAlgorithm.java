@@ -1,4 +1,3 @@
-package entrants.pacman.silvaw;
 
 import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
@@ -15,16 +14,18 @@ import java.util.*;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public class MyPacManMiniMax extends PacmanController {
+public class MiniMaxAlgorithm extends PacmanController
+{
 
     private static final int MINIMAX_DEPTH = 4;
 
-    public MOVE getMove(Game game, long timeDue) {
+    public MOVE getMove(Game game, long timeDue)
+    {
         Tree miniMaxTree = createMiniMaxTree(game, MINIMAX_DEPTH, true);
         return bestMoveFromTree(miniMaxTree);
     }
-
-    private Tree createMiniMaxTree(Game game, int depth, boolean isPacMan) {
+    private Tree createMiniMaxTree(Game game, int depth, boolean isPacMan)
+    {
 
         if (depth == 0 || isEndGameState(game)) {
             return new Leaf(heuristicVal(game));
@@ -66,23 +67,15 @@ public class MyPacManMiniMax extends PacmanController {
     }
 
 
-    private boolean isEndGameState(Game game) {
+    private boolean isEndGameState(Game game)
+    {
         return (game.getNumberOfActivePills() == 0 && game.getNumberOfActivePowerPills() == 0) ||
                 game.wasPacManEaten() ||
                 game.gameOver();
     }
 
-    private int shortestPathDistanceToGhost(Game game, GHOST ghost) {
-        return game.getShortestPathDistance(game.getPacmanCurrentNodeIndex(), game.getGhostCurrentNodeIndex(ghost));
-    }
-
-    private Game stateAfterPacMove(MOVE pacMove, Game curGame) {
-        Game copyOfGame = curGame.copy();
-        copyOfGame.updatePacMan(pacMove);
-        return copyOfGame;
-    }
-
-    private int heuristicVal(Game game) {
+    private int heuristicVal(Game game)
+    {
         if (game.wasPacManEaten()) {
 
             return Integer.MIN_VALUE;
@@ -142,10 +135,23 @@ public class MyPacManMiniMax extends PacmanController {
                 weightedEatingGhostScore;
     }
 
+    private int shortestPathDistanceToGhost(Game game, GHOST ghost)
+    {
+        return game.getShortestPathDistance(game.getPacmanCurrentNodeIndex(), game.getGhostCurrentNodeIndex(ghost));
+    }
+
+    private Game stateAfterPacMove(MOVE pacMove, Game curGame)
+    {
+        Game copyOfGame = curGame.copy();
+        copyOfGame.updatePacMan(pacMove);
+        return copyOfGame;
+    }
+
     private Set<Map<GHOST, MOVE>> calculateGhostCombinations(Set<MOVE> possibleBlinkyMoves,
                                                              Set<MOVE> possibleInkyMoves,
                                                              Set<MOVE> possiblePinkyMoves,
-                                                             Set<MOVE> possibleSueMoves) {
+                                                             Set<MOVE> possibleSueMoves)
+    {
         Set<Map<GHOST, MOVE>> result = new HashSet<>();
 
         for (MOVE blinkyMove : possibleBlinkyMoves) {
@@ -168,7 +174,9 @@ public class MyPacManMiniMax extends PacmanController {
         return result;
     }
 
-    private Game gameStateAfterGhosts(Game game, Map<GHOST, MOVE> ghostMoves) {
+
+    private Game gameStateAfterGhosts(Game game, Map<GHOST, MOVE> ghostMoves)
+    {
         Game copyOfGame = game.copy();
 
         EnumMap<GHOST, MOVE> enumMap = new EnumMap<>(GHOST.class);
@@ -177,10 +185,11 @@ public class MyPacManMiniMax extends PacmanController {
             enumMap.put(ghostMove.getKey(), ghostMove.getValue());
         }
         copyOfGame.updateGhosts(enumMap);
+
         return copyOfGame;
     }
-
-    private Set<MOVE> getPossibleGhostMoves(Game game, GHOST ghost) {
+    private Set<MOVE> getPossibleGhostMoves(Game game, GHOST ghost)
+    {
         Set<MOVE> result = Sets.newHashSet(game.getPossibleMoves(game.getGhostCurrentNodeIndex(ghost),
                 game.getGhostLastMoveMade(ghost)));
 
@@ -191,7 +200,177 @@ public class MyPacManMiniMax extends PacmanController {
         return result;
     }
 
-    private MOVE bestMoveFromTree(Tree miniMaxTree) {
+    private MOVE bestMoveFromTree(Tree miniMaxTree)
+    {
         return bestMoveFromTreeHelper(miniMaxTree, true).move;
+    }
+
+    private MoveNumber bestMoveFromTreeHelper(Tree miniMaxTree, boolean maximizingPlayer)
+    {
+        if (miniMaxTree.isLeaf()) {
+            // There is no possible move for just a leaf so just leave as null
+            return new MoveNumber(null, miniMaxTree.getHeuristic());
+        } else if (maximizingPlayer) {
+            // This should be a PacNode. Retrieve the children and moves and find the one with the largest heuristic val
+            Optional<MoveNumber> moveNumberOptional = Optional.absent();
+
+            for (Map.Entry<MOVE, Tree> entry : miniMaxTree.getChildrenAndMoves().entrySet()) {
+                MoveNumber moveNumber = bestMoveFromTreeHelper(entry.getValue(), false);
+                moveNumber.setMove(entry.getKey());
+
+                if (!moveNumberOptional.isPresent()) {
+                    moveNumberOptional = Optional.of(moveNumber);
+                } else if (moveNumber.hValue > moveNumberOptional.get().hValue) {
+                    moveNumberOptional = Optional.of(moveNumber);
+                }
+            }
+            return moveNumberOptional.get();
+        } else {
+
+            Optional<MoveNumber> moveNumberOptional = Optional.absent();
+
+            for (Tree tree : miniMaxTree.getChildren()) {
+                MoveNumber moveNumber = bestMoveFromTreeHelper(tree, true);
+
+                if (!moveNumberOptional.isPresent()) {
+                    moveNumberOptional = Optional.of(moveNumber);
+                } else if (moveNumber.hValue < moveNumberOptional.get().hValue) {
+                    moveNumberOptional = Optional.of(moveNumber);
+                }
+            }
+            return moveNumberOptional.get();
+        }
+    }
+
+    interface Tree
+    {
+        boolean isLeaf();
+        int getHeuristic();
+        Map<MOVE, Tree> getChildrenAndMoves();
+        Set<Tree> getChildren();
+
+    }
+
+    private static class PacNode implements Tree
+    {
+        private Map<MOVE, Tree> branches;
+
+        PacNode(Map<MOVE, Tree> branches)
+        {
+            this.branches = checkNotNull(branches);
+        }
+
+        @Override
+        public boolean isLeaf()
+        {
+            return false;
+        }
+
+        @Override
+        public int getHeuristic()
+        {
+            throw new RuntimeException();
+        }
+
+        @Override
+        public Map<MOVE, Tree> getChildrenAndMoves()
+        {
+            return branches;
+        }
+
+        @Override
+        public Set<Tree> getChildren()
+        {
+            throw new RuntimeException();
+        }
+    }
+    private static class GhostNode implements Tree
+    {
+
+        private Set<Tree> ghostBranches;
+
+        GhostNode(Set<Tree> ghostBranches)
+        {
+            this.ghostBranches = checkNotNull(ghostBranches);
+        }
+
+        @Override
+        public boolean isLeaf()
+        {
+            return false;
+        }
+
+        @Override
+        public int getHeuristic()
+        {
+            throw new RuntimeException();
+        }
+
+        @Override
+        public Map<MOVE, Tree> getChildrenAndMoves()
+        {
+            throw new RuntimeException();
+        }
+
+        @Override
+        public Set<Tree> getChildren()
+        {
+            return ghostBranches;
+        }
+    }
+
+
+    private static class Leaf implements Tree
+    {
+
+        int heuristic;
+
+        Leaf(int heuristic)
+        {
+            this.heuristic = checkNotNull(heuristic);
+        }
+
+        @Override
+        public boolean isLeaf()
+        {
+            return true;
+        }
+
+        @Override
+        public int getHeuristic()
+        {
+            return heuristic;
+        }
+
+        @Override
+        public Map<MOVE, Tree> getChildrenAndMoves()
+        {
+            throw new RuntimeException();
+        }
+
+        @Override
+        public Set<Tree> getChildren()
+        {
+            throw new RuntimeException();
+        }
+    }
+
+    private static class MoveNumber
+    {
+
+        MOVE move;
+
+        int hValue;
+
+        MoveNumber(@Nullable MOVE move, int hValue)
+        {
+            this.move = move;
+            this.hValue = checkNotNull(hValue);
+        }
+
+        public void setMove(MOVE move)
+        {
+            this.move = checkNotNull(move);
+        }
     }
 }
