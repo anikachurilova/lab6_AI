@@ -15,18 +15,16 @@ import java.util.*;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public class MyPacManMiniMax extends PacmanController
-{
+public class MyPacManMiniMax extends PacmanController {
 
     private static final int MINIMAX_DEPTH = 4;
 
-    public MOVE getMove(Game game, long timeDue)
-    {
+    public MOVE getMove(Game game, long timeDue) {
         Tree miniMaxTree = createMiniMaxTree(game, MINIMAX_DEPTH, true);
         return bestMoveFromTree(miniMaxTree);
     }
-    private Tree createMiniMaxTree(Game game, int depth, boolean isPacMan)
-    {
+
+    private Tree createMiniMaxTree(Game game, int depth, boolean isPacMan) {
 
         if (depth == 0 || isEndGameState(game)) {
             return new Leaf(heuristicVal(game));
@@ -68,20 +66,132 @@ public class MyPacManMiniMax extends PacmanController
     }
 
 
-    private boolean isEndGameState(Game game)
-    {
+    private boolean isEndGameState(Game game) {
         return (game.getNumberOfActivePills() == 0 && game.getNumberOfActivePowerPills() == 0) ||
                 game.wasPacManEaten() ||
                 game.gameOver();
     }
-    private int shortestPathDistanceToGhost(Game game, GHOST ghost)
-    {
+
+    private int shortestPathDistanceToGhost(Game game, GHOST ghost) {
         return game.getShortestPathDistance(game.getPacmanCurrentNodeIndex(), game.getGhostCurrentNodeIndex(ghost));
     }
 
-    private Game stateAfterPacMove(MOVE pacMove, Game curGame)
-    {
+    private Game stateAfterPacMove(MOVE pacMove, Game curGame) {
         Game copyOfGame = curGame.copy();
         copyOfGame.updatePacMan(pacMove);
         return copyOfGame;
     }
+
+    private int heuristicVal(Game game) {
+        if (game.wasPacManEaten()) {
+
+            return Integer.MIN_VALUE;
+        }
+
+        int totalPills = game.getNumberOfActivePills() + game.getNumberOfActivePowerPills();
+        int score = game.getScore();
+
+
+        int distanceToBlinky = shortestPathDistanceToGhost(game, GHOST.BLINKY);
+        int distanceToInky = shortestPathDistanceToGhost(game, GHOST.INKY);
+        int distanceToPinky = shortestPathDistanceToGhost(game, GHOST.PINKY);
+        int distanceToSue = shortestPathDistanceToGhost(game, GHOST.SUE);
+        Map<GHOST, Integer> ghostsToDistance = new HashMap<>();
+        ghostsToDistance.put(GHOST.BLINKY, distanceToBlinky);
+        ghostsToDistance.put(GHOST.INKY, distanceToInky);
+        ghostsToDistance.put(GHOST.PINKY, distanceToPinky);
+        ghostsToDistance.put(GHOST.SUE, distanceToSue);
+
+        int distanceToNearestGhost = Collections.min(Lists.newArrayList(distanceToBlinky, distanceToInky,
+                distanceToPinky, distanceToSue));
+        GHOST nearestGhost = null;
+
+        for (Map.Entry<GHOST, Integer> ghostDistance : ghostsToDistance.entrySet()) {
+            if (ghostDistance.getValue() == distanceToNearestGhost) {
+                nearestGhost = ghostDistance.getKey();
+            }
+        }
+
+
+        int weightedGhostScore = -500 * (20 - distanceToNearestGhost);
+        if (distanceToNearestGhost >= 20 || game.isGhostEdible(nearestGhost)) {
+            weightedGhostScore = 0;
+        }
+
+        int weightedEatingGhostScore = 0;
+        if (game.isGhostEdible(nearestGhost) && distanceToNearestGhost <= 40) {
+            weightedEatingGhostScore = 50 * (40 - distanceToNearestGhost);
+        }
+
+
+        List<Integer> activePillIndices = new ArrayList<>();
+        activePillIndices.addAll(Ints.asList(game.getActivePillsIndices()));
+        activePillIndices.addAll(Ints.asList(game.getActivePowerPillsIndices()));
+
+        List<Integer> distancesToPills = new ArrayList<>();
+        for (int pillIndice : activePillIndices) {
+            distancesToPills.add(game.getShortestPathDistance(game.getPacmanCurrentNodeIndex(), pillIndice));
+        }
+        int distanceToNearestPill = 0;
+        if (!distancesToPills.isEmpty()) {
+
+            distanceToNearestPill = Collections.min(distancesToPills);
+        }
+
+        return -1 * totalPills + -1 * distanceToNearestPill + 100 * score + weightedGhostScore +
+                weightedEatingGhostScore;
+    }
+
+    private Set<Map<GHOST, MOVE>> calculateGhostCombinations(Set<MOVE> possibleBlinkyMoves,
+                                                             Set<MOVE> possibleInkyMoves,
+                                                             Set<MOVE> possiblePinkyMoves,
+                                                             Set<MOVE> possibleSueMoves) {
+        Set<Map<GHOST, MOVE>> result = new HashSet<>();
+
+        for (MOVE blinkyMove : possibleBlinkyMoves) {
+            for (MOVE inkyMove : possibleInkyMoves) {
+                for (MOVE pinkyMove : possiblePinkyMoves) {
+                    for (MOVE sueMove : possibleSueMoves) {
+
+                        Map<GHOST, MOVE> possibleMoveSet = new HashMap<>();
+                        possibleMoveSet.put(GHOST.BLINKY, blinkyMove);
+                        possibleMoveSet.put(GHOST.INKY, inkyMove);
+                        possibleMoveSet.put(GHOST.PINKY, pinkyMove);
+                        possibleMoveSet.put(GHOST.SUE, sueMove);
+
+                        result.add(possibleMoveSet);
+                    }
+                }
+            }
+        }
+
+        return result;
+    }
+
+    private Game gameStateAfterGhosts(Game game, Map<GHOST, MOVE> ghostMoves) {
+        Game copyOfGame = game.copy();
+
+        EnumMap<GHOST, MOVE> enumMap = new EnumMap<>(GHOST.class);
+
+        for (Map.Entry<GHOST, MOVE> ghostMove : ghostMoves.entrySet()) {
+            enumMap.put(ghostMove.getKey(), ghostMove.getValue());
+        }
+        copyOfGame.updateGhosts(enumMap);
+        return copyOfGame;
+    }
+
+    private Set<MOVE> getPossibleGhostMoves(Game game, GHOST ghost) {
+        Set<MOVE> result = Sets.newHashSet(game.getPossibleMoves(game.getGhostCurrentNodeIndex(ghost),
+                game.getGhostLastMoveMade(ghost)));
+
+        if (result.isEmpty()) {
+
+            return Sets.newHashSet(MOVE.NEUTRAL);
+        }
+        return result;
+    }
+
+    private MOVE bestMoveFromTree(Tree miniMaxTree) {
+        return bestMoveFromTreeHelper(miniMaxTree, true).move;
+    }
+}
