@@ -1,3 +1,4 @@
+
 import pacman.Executor;
 import pacman.controllers.examples.RandomGhosts;
 
