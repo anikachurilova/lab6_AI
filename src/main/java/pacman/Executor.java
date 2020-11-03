@@ -21,7 +21,12 @@ import java.util.Random;
 
 import static pacman.game.Constants.*;
 
-
+/**
+ * This class may be used to execute the game in timed or un-timed modes, with or without
+ * visuals. Competitors should implement their controllers in game.entries.ghosts and
+ * game.entries.pacman respectively. The skeleton classes are already provided. The package
+ * structure should not be changed (although you may create sub-packages in these packages).
+ */
 @SuppressWarnings("unused")
 public class Executor {
 	protected final boolean pacmanPO;
@@ -47,7 +52,12 @@ public class Executor {
 		}
 	}
 
-
+	/**
+	 * The main method. Several options are listed - simply remove comments to use the option you want.
+	 *
+	 * @param args the command line arguments
+	 * @throws IOException It just does
+	 */
 	public static void main(String[] args) throws IOException {
 		Executor exec = new Executor();
 
@@ -84,7 +94,6 @@ public class Executor {
 			System.out.println("\t" + results[i][1]);
 		}
 
-
 //        File file = new File("results/thresholdCOP.csv");
 //        file.createNewFile();
 //        File filePop = new File("results/thresholdPOP.csv");
@@ -116,42 +125,42 @@ public class Executor {
 //        }
 
 
-    /*
+		/*
         //run multiple games in batch mode - good for testing.
-    int numTrials=10;
-    exec.runExperiment(new RandomPacMan(),new RandomGhosts(),numTrials);
-     */
+		int numTrials=10;
+		exec.runExperiment(new RandomPacMan(),new RandomGhosts(),numTrials);
+		 */
 
-    /*
+		/*
         //run a game in synchronous mode: game waits until controllers respond.
-    int delay=5;
-    boolean visual=true;
-    exec.runGame(new RandomPacMan(),new RandomGhosts(),visual,delay);
-       */
+		int delay=5;
+		boolean visual=true;
+		exec.runGame(new RandomPacMan(),new RandomGhosts(),visual,delay);
+  		 */
 
 		///*
 		//run the game in asynchronous mode.
-//    boolean visual=true;
-//    exec.runGameTimed(new NearestPillPacMan(),new AggressiveGhosts(),visual);
-//    exec.runGameTimed(new StarterPacMan(),new StarterGhosts(),visual);
-//    exec.runGameTimed(new HumanController(new KeyBoardInput()),new StarterGhosts(),visual);
+//		boolean visual=true;
+//		exec.runGameTimed(new NearestPillPacMan(),new AggressiveGhosts(),visual);
+//		exec.runGameTimed(new StarterPacMan(),new StarterGhosts(),visual);
+//		exec.runGameTimed(new HumanController(new KeyBoardInput()),new StarterGhosts(),visual);
 		//*/
 
-    /*
+		/*
         //run the game in asynchronous mode but advance as soon as both controllers are ready  - this is the mode of the competition.
-    //time limit of DELAY ms still applies.
-    boolean visual=true;
-    boolean fixedTime=false;
-    exec.runGameTimedSpeedOptimised(new RandomPacMan(),new RandomGhosts(),fixedTime,visual);
-    */
+		//time limit of DELAY ms still applies.
+		boolean visual=true;
+		boolean fixedTime=false;
+		exec.runGameTimedSpeedOptimised(new RandomPacMan(),new RandomGhosts(),fixedTime,visual);
+		*/
 
-    /*
+		/*
         //run game in asynchronous mode and record it to file for replay at a later stage.
-    boolean visual=true;
-    String fileName="replay.txt";
-    exec.runGameTimedRecorded(new HumanController(new KeyBoardInput()),new RandomGhosts(),visual,fileName);
-    //exec.replayGame(fileName,visual);
-     */
+		boolean visual=true;
+		String fileName="replay.txt";
+		exec.runGameTimedRecorded(new HumanController(new KeyBoardInput()),new RandomGhosts(),visual,fileName);
+		//exec.replayGame(fileName,visual);
+		 */
 	}
 
 	private static void writeStat(FileWriter writer, Stats stat, int i) throws IOException {
@@ -192,7 +201,6 @@ public class Executor {
 			BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(fileName)));
 			String input = br.readLine();
 
-
 			while (input != null) {
 				if (!input.equals(""))
 					replay.add(input);
@@ -214,6 +222,19 @@ public class Executor {
 		}
 	}
 
+	/**
+	 * For running multiple games without visuals. This is useful to get a good idea of how well a controller plays
+	 * against a chosen opponent: the random nature of the game means that performance can vary from game to game.
+	 * Running many games and looking at the average score (and standard deviation/error) helps to get a better
+	 * idea of how well the controller is likely to do in the competition.
+	 *
+	 * @param pacManController The Pac-Man controller
+	 * @param ghostController  The Ghosts controller
+	 * @param trials           The number of trials to be executed
+	 * @param description      Description for the stats
+	 * @param tickLimit        Tick limit for the games in the experiment
+	 * @return Stats[] containing the scores in index 0 and the ticks in position 1
+	 */
 	public Stats[] runExperiment(Controller<MOVE> pacManController, Controller<EnumMap<GHOST, MOVE>> ghostController, int trials, String description, int tickLimit) {
 		Stats stats = new Stats(description);
 		Stats ticks = new Stats(description + " Ticks");
@@ -275,6 +296,16 @@ public class Executor {
 		return new Stats[]{stats, ticks};
 	}
 
+	/**
+	 * Run a game in asynchronous mode: the game waits until a move is returned. In order to slow thing down in case
+	 * the controllers return very quickly, a time limit can be used. If fasted gameplay is required, this delay
+	 * should be put as 0.
+	 *
+	 * @param pacManController The Pac-Man controller
+	 * @param ghostController  The Ghosts controller
+	 * @param visual           Indicates whether or not to use visuals
+	 * @param delay            The delay between time-steps
+	 */
 	public void runGame(Controller<MOVE> pacManController, Controller<EnumMap<GHOST, MOVE>> ghostController, boolean visual, int delay) {
 		Game game = (this.ghostsMessage) ? new Game(0, messenger.copy()) : new Game(0);
 
@@ -296,6 +327,14 @@ public class Executor {
 		}
 	}
 
+	/**
+	 * Run the game with time limit (asynchronous mode). This is how it will be done in the competition.
+	 * Can be played with and without visual display of game states.
+	 *
+	 * @param pacManController The Pac-Man controller
+	 * @param ghostController  The Ghosts controller
+	 * @param visual           Indicates whether or not to use visuals
+	 */
 	public void runGameTimed(Controller<MOVE> pacManController, Controller<EnumMap<GHOST, MOVE>> ghostController, boolean visual) {
 		Game game = (this.ghostsMessage) ? new Game(0, messenger.copy()) : new Game(0);
 
@@ -330,6 +369,16 @@ public class Executor {
 		ghostController.terminate();
 	}
 
+	/**
+	 * Run the game in asynchronous mode but proceed as soon as both controllers replied. The time limit still applies so
+	 * so the game will proceed after 40ms regardless of whether the controllers managed to calculate a turn.
+	 *
+	 * @param pacManController The Pac-Man controller
+	 * @param ghostController  The Ghosts controller
+	 * @param fixedTime        Whether or not to wait until 40ms are up even if both controllers already responded
+	 * @param visual           Indicates whether or not to use visuals
+	 * @return int score achieved by Ms. Pac-Man
+	 */
 	public int runGameTimedSpeedOptimised(Controller<MOVE> pacManController, Controller<EnumMap<GHOST, MOVE>> ghostController, boolean fixedTime, boolean visual) {
 		Game game = (this.ghostsMessage) ? new Game(0, messenger.copy()) : new Game(0);
 
@@ -377,7 +426,15 @@ public class Executor {
 		return game.getScore();
 	}
 
-
+	/**
+	 * Run a game in asynchronous mode and recorded.
+	 *
+	 * @param pacManController The Pac-Man controller
+	 * @param ghostController  The Ghosts controller
+	 * @param visual           Whether to run the game with visuals
+	 * @param fileName         The file name of the file that saves the replay
+	 * @return Stats the statistics for the run
+	 */
 	public Stats runGameTimedRecorded(Controller<MOVE> pacManController, Controller<EnumMap<GHOST, MOVE>> ghostController, boolean visual, String fileName) {
 		Stats stats = new Stats("");
 		StringBuilder replay = new StringBuilder();
@@ -422,6 +479,12 @@ public class Executor {
 		return stats;
 	}
 
+	/**
+	 * Replay a previously saved game.
+	 *
+	 * @param fileName The file name of the game to be played
+	 * @param visual   Indicates whether or not to use visuals
+	 */
 	public void replayGame(String fileName, boolean visual) {
 		ArrayList<String> timeSteps = loadReplay(fileName);
 
