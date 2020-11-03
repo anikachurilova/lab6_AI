@@ -85,9 +85,9 @@ public final class Constants {
 
 	;
 
-	public static final int PILL = 10;                        //points for a normal pill
-	public static final int POWER_PILL = 50;                    //points for a power pill
-	public static final int GHOST_EAT_SCORE = 200;            //score for the first ghost eaten (doubles every time for the duration of a single power pill)
+	public static final int PILL = 1;                        //points for a normal pill
+	public static final int POWER_PILL = 0;                    //points for a power pill
+	public static final int GHOST_EAT_SCORE = 0;            //score for the first ghost eaten (doubles every time for the duration of a single power pill)
 	public static final int EDIBLE_TIME = 200;                //initial time a ghost is edible for (decreases as level number increases)
 	public static final float EDIBLE_TIME_REDUCTION = 0.9f;    //reduction factor by which edible time decreases as level number increases
 	public static final float LAIR_REDUCTION = 0.9f;            //reduction factor by which lair times decrease as level number increases
@@ -97,7 +97,7 @@ public final class Constants {
 	public static final float GHOST_REVERSAL = 0.0015f;        //probability of a global ghost reversal event
 	public static final int MAX_TIME = 24000;                    //maximum time a game can be played for
 	public static final int AWARD_LIFE_LEFT = 800;            //points awarded for every life left at the end of the game (when time runs out)
-	public static final int EXTRA_LIFE_SCORE = 10000;            //extra life is awarded when this many points have been collected
+	public static final int EXTRA_LIFE_SCORE = 0;            //extra life is awarded when this many points have been collected
 	public static final int EAT_DISTANCE = 2;                    //distance in the connected graph considered close enough for an eating event to take place
 	public static final int NUM_GHOSTS = 4;                    //number of ghosts in the game
 	public static final int NUM_MAZES = 4;                    //number of different mazes in the game
