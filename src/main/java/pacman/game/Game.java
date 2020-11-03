@@ -2,6 +2,7 @@ package pacman.game;
 
 import pacman.game.Constants.*;
 import pacman.game.comms.Messenger;
+import pacman.game.info.GameInfo;
 import pacman.game.internal.*;
 
 import java.util.BitSet;

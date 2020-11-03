@@ -3,6 +3,7 @@ package pacman.game;
 import pacman.controllers.examples.po.mcts.prediction.GhostLocation;
 import pacman.controllers.examples.po.mcts.prediction.GhostPredictions;
 import pacman.game.Constants.*;
+import pacman.game.internal.PacMan;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;

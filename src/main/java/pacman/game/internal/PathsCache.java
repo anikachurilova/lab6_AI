@@ -1,14 +1,28 @@
 package pacman.game.internal;
 
-import pacman.game.Constants;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.Set;
+
+import pacman.game.Constants.MOVE;
 import pacman.game.Game;
-import pacman.game.internal.DNode;
-import pacman.game.internal.Junction;
-import pacman.game.internal.JunctionData;
-import pacman.game.internal.Maze;
 
-import java.util.*;
-
+/*
+ * Pre-computes paths for more efficient execution of the game. It is a tradeoff between loading times, execution speed,
+ * and file sizes. It works as follows: the paths from any junction to any other junction are computed for all directions
+ * one can take at the junction. Then, for each node in the graph, the paths to the nearest one or two junctions are computed.
+ * A path is then found by
+ * 	(a) find the nearest junction to the source (in the case of the ghosts, just follow the path): distance d_1
+ *  (b) find the shortest distance to the one or two junctions closest to the target. This depends also on distance (d_3) from target junction to target: d_2
+ *  (c) combine the three paths: d_1+d_2+d_3
+ *
+ * In the case of Ms Pac-Man, it works as follows:
+ *  (a) Looking at all combinations of 2-4 junctions, choosing the shortest path that also takes into account the path to get to either of them.
+ *
+ * If one only wants the distance instead of the path, a more efficient method has been implemented that does not need to copy arrays.
+ */
 public class PathsCache {
     public HashMap<Integer, Integer> junctionIndexConverter;
     public DNode[] nodes;
@@ -62,7 +76,7 @@ public class PathsCache {
                 int distance = closestFromJunctions.get(i).path.length;
                 //junction to junction
                 int[] tmpPath = junctions[junctionIndexConverter.get(closestFromJunctions.get(i).nodeID)]
-                        .paths[junctionIndexConverter.get(closestToJunctions.get(j).nodeID)].get(Constants.MOVE.NEUTRAL);
+                        .paths[junctionIndexConverter.get(closestToJunctions.get(j).nodeID)].get(MOVE.NEUTRAL);
                 distance += tmpPath.length;
                 //to the second junction
                 distance += closestToJunctions.get(j).path.length;
@@ -82,11 +96,11 @@ public class PathsCache {
     /////// ghosts //////////
 
     //To be made more efficient shortly.
-    public int getPathDistanceFromA2B(int a, int b, Constants.MOVE lastMoveMade) {
+    public int getPathDistanceFromA2B(int a, int b, MOVE lastMoveMade) {
         return getPathFromA2B(a, b, lastMoveMade).length;
     }
 
-    public int[] getPathFromA2B(int a, int b, Constants.MOVE lastMoveMade) {
+    public int[] getPathFromA2B(int a, int b, MOVE lastMoveMade) {
         //not going anywhere
         if (a == b)
             return new int[]{};
@@ -102,7 +116,7 @@ public class PathsCache {
         //we have reached a junction, fromJunction, which we entered with moveEnteredJunction
         int junctionFrom = fromJunction.nodeID;
         int junctionFromId = junctionIndexConverter.get(junctionFrom);
-        Constants.MOVE moveEnteredJunction = fromJunction.lastMove.equals(Constants.MOVE.NEUTRAL) ? lastMoveMade : fromJunction.lastMove; //if we are at a junction, consider last move instead
+        MOVE moveEnteredJunction = fromJunction.lastMove.equals(MOVE.NEUTRAL) ? lastMoveMade : fromJunction.lastMove; //if we are at a junction, consider last move instead
 
         //now we need to get the 1 or 2 target junctions that enclose the target point
         ArrayList<JunctionData> junctionsTo = nodes[b].closestJunctions;
@@ -131,11 +145,11 @@ public class PathsCache {
                     onTheWay = true;
                 }
             } else {
-                EnumMap<Constants.MOVE, int[]> paths = junctions[junctionFromId].paths[junctionToId];
-                Set<Constants.MOVE> set = paths.keySet();
+                EnumMap<MOVE, int[]> paths = junctions[junctionFromId].paths[junctionToId];
+                Set<MOVE> set = paths.keySet();
 
-                for (Constants.MOVE move : set) {
-                    if (!move.opposite().equals(moveEnteredJunction) && !move.equals(Constants.MOVE.NEUTRAL)) {
+                for (MOVE move : set) {
+                    if (!move.opposite().equals(moveEnteredJunction) && !move.equals(MOVE.NEUTRAL)) {
                         int[] path = paths.get(move);
 
                         if (path.length + junctionsTo.get(q).path.length < minDist)//need to take distance from toJunction to target into account
@@ -165,7 +179,7 @@ public class PathsCache {
 
         for (int q = 0; q < indices.length; q++)// from
         {
-            Constants.MOVE[] possibleMoves = m.graph[indices[q]].allPossibleMoves.get(Constants.MOVE.NEUTRAL);// all possible moves
+            MOVE[] possibleMoves = m.graph[indices[q]].allPossibleMoves.get(MOVE.NEUTRAL);// all possible moves
 
             junctions[q] = new Junction(q, indices[q], indices.length);
 
@@ -195,17 +209,17 @@ public class PathsCache {
             allNodes[i] = new DNode(i, isJunction);
 
             if (!isJunction) {
-                Constants.MOVE[] possibleMoves = m.graph[i].allPossibleMoves.get(Constants.MOVE.NEUTRAL);
+                MOVE[] possibleMoves = m.graph[i].allPossibleMoves.get(MOVE.NEUTRAL);
 
                 for (int j = 0; j < possibleMoves.length; j++) {
                     ArrayList<Integer> path = new ArrayList<Integer>();
 
-                    Constants.MOVE lastMove = possibleMoves[j];
+                    MOVE lastMove = possibleMoves[j];
                     int currentNode = game.getNeighbour(i, lastMove);
                     path.add(currentNode);
 
                     while (!game.isJunction(currentNode)) {
-                        Constants.MOVE[] newPossibleMoves = game.getPossibleMoves(currentNode);
+                        MOVE[] newPossibleMoves = game.getPossibleMoves(currentNode);
 
                         for (int q = 0; q < newPossibleMoves.length; q++)
                             if (newPossibleMoves[q].opposite() != lastMove) {
@@ -245,5 +259,149 @@ public class PathsCache {
                 fullArray[index++] = arrays[i][j];
 
         return fullArray;
+    }
+}
+
+class JunctionData {
+    public int nodeID, nodeStartedFrom;
+    public MOVE firstMove, lastMove;
+    public int[] path, reversePath;
+
+    public JunctionData(int nodeID, MOVE firstMove, int nodeStartedFrom, int[] path, MOVE lastMove) {
+        this.nodeID = nodeID;
+        this.nodeStartedFrom = nodeStartedFrom;
+        this.firstMove = firstMove;
+        this.path = path;
+        this.lastMove = lastMove;
+
+        if (path.length > 0)
+            this.reversePath = getReversePath(path);
+        else
+            reversePath = new int[]{};
+    }
+
+    public int[] getReversePath(int[] path) {
+        int[] reversePath = new int[path.length];
+
+        for (int i = 1; i < reversePath.length; i++)
+            reversePath[i - 1] = path[path.length - 1 - i];
+
+        reversePath[reversePath.length - 1] = nodeStartedFrom;
+
+        return reversePath;
+    }
+
+    public String toString() {
+        return nodeID + "\t" + firstMove.toString() + "\t" + Arrays.toString(path);
+    }
+}
+
+class DNode {
+    public int nodeID;
+    public ArrayList<JunctionData> closestJunctions;
+    public boolean isJunction;
+
+    public DNode(int nodeID, boolean isJunction) {
+        this.nodeID = nodeID;
+        this.isJunction = isJunction;
+
+        this.closestJunctions = new ArrayList<JunctionData>();
+
+        if (isJunction)
+            closestJunctions.add(new JunctionData(nodeID, MOVE.NEUTRAL, nodeID, new int[]{}, MOVE.NEUTRAL));
+    }
+
+    public int[] getPathToJunction(MOVE lastMoveMade) {
+        if (isJunction)
+            return new int[]{};
+
+        for (int i = 0; i < closestJunctions.size(); i++)
+            if (!closestJunctions.get(i).firstMove.equals(lastMoveMade.opposite()))
+                return closestJunctions.get(i).path;
+
+        return null;
+    }
+
+    public JunctionData getNearestJunction(MOVE lastMoveMade) {
+        if (isJunction)
+            return closestJunctions.get(0);
+
+        int minDist = Integer.MAX_VALUE;
+        int bestIndex = -1;
+
+        for (int i = 0; i < closestJunctions.size(); i++)
+            if (!closestJunctions.get(i).firstMove.equals(lastMoveMade.opposite())) {
+                int newDist = closestJunctions.get(i).path.length;
+
+                if (newDist < minDist) {
+                    minDist = newDist;
+                    bestIndex = i;
+                }
+            }
+
+        if (bestIndex != -1)
+            return closestJunctions.get(bestIndex);
+        else
+            return null;
+    }
+
+    public void addPath(int junctionID, MOVE firstMove, int nodeStartedFrom, int[] path, MOVE lastMove) {
+        closestJunctions.add(new JunctionData(junctionID, firstMove, nodeStartedFrom, path, lastMove));
+    }
+
+    public String toString() {
+        return "" + nodeID + "\t" + isJunction;
+    }
+}
+
+// for each junction, stores paths to all other junctions for all directions
+class Junction {
+    public int jctId, nodeId;
+    public EnumMap<MOVE, int[]>[] paths;
+
+    public void computeShortestPaths() {
+        MOVE[] moves = MOVE.values();
+
+        for (int i = 0; i < paths.length; i++) {
+            if (i == jctId)
+                paths[i].put(MOVE.NEUTRAL, new int[]{});
+            else {
+                int distance = Integer.MAX_VALUE;
+                int[] path = null;
+
+                for (int j = 0; j < moves.length; j++) {
+                    if (paths[i].containsKey(moves[j])) {
+                        int[] tmp = paths[i].get(moves[j]);
+
+                        if (tmp.length < distance) {
+                            distance = tmp.length;
+                            path = tmp;
+                        }
+                    }
+                }
+
+                paths[i].put(MOVE.NEUTRAL, path);
+            }
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    public Junction(int jctId, int nodeId, int numJcts) {
+        this.jctId = jctId;
+        this.nodeId = nodeId;
+
+        paths = new EnumMap[numJcts];
+
+        for (int i = 0; i < paths.length; i++)
+            paths[i] = new EnumMap<MOVE, int[]>(MOVE.class);
+    }
+
+    // store the shortest path given the last move made
+    public void addPath(int toJunction, MOVE firstMoveMade, int[] path) {
+        paths[toJunction].put(firstMoveMade, path);
+    }
+
+    public String toString() {
+        return jctId + "\t" + nodeId;
     }
 }
