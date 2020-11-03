@@ -29,11 +29,11 @@ public class MyPacMan extends Controller<MOVE> {
 	private int currentLevel;
 
 	public MOVE getMove(Game game, long timeDue) {
-		
+
 		double[] moveScores = new double[5];
 
 		int currentPacmanNodeIndex = game.getPacmanCurrentNodeIndex();
-		
+
 		if (clusterManager == null || game.getCurrentLevel() != currentLevel) {
 			// Init once or when the level changes
 			clusterManager = new PillClusterManager(game);
@@ -52,7 +52,7 @@ public class MyPacMan extends Controller<MOVE> {
 					node.index, DM.PATH);
 			moveScores[move.ordinal()] += score;
 		}
-		
+
 		double max = 0;
 		MOVE biggestClusterNode = null;
 		int i = 0;
@@ -93,12 +93,12 @@ public class MyPacMan extends Controller<MOVE> {
 		}
 
 		/**
-		 * 
+		 *
 		 * @param elementIndex
 		 * @return null if elementIndex is non existent list of new clusters
 		 */
 		public List<ConnectedComponents> removeElement(Game game,
-				int elementIndex) {
+													   int elementIndex) {
 			boolean removed = elementsIndicesInCluster.remove(elementIndex);
 			if (!removed) {
 				return null;
@@ -117,7 +117,7 @@ public class MyPacMan extends Controller<MOVE> {
 		}
 
 		private SortedSet<Integer> createCluster(SortedSet<Integer> newCluster,
-				Game game, int elementIndex) {
+												 Game game, int elementIndex) {
 			if (elementsIndicesInCluster.remove(elementIndex)) {
 				newCluster.add(elementIndex);
 				int[] neighbours = getNeighbouringPills(game, elementIndex);
@@ -253,7 +253,7 @@ public class MyPacMan extends Controller<MOVE> {
 		}
 
 		public List<NodeDistance> findClosestNodeIndexPerCluster(Game game,
-				int indexNodeOrigin) {
+																 int indexNodeOrigin) {
 			List<NodeDistance> closestNodes = new ArrayList<NodeDistance>(
 					clusters.size());
 			for (ConnectedComponents cluster : clusters) {
