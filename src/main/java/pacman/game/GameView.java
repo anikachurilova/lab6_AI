@@ -217,7 +217,7 @@ public final class GameView extends JComponent {
 
 		for (int i = 0; i < powerPillIndices.length; i++)
 			if (game.isPowerPillStillAvailable(i))
-				bufferGraphics.fillOval(game.getNodeXCood(powerPillIndices[i]) * MAG + 1, game.getNodeYCood(powerPillIndices[i]) * MAG + 5, 8, 8);
+				bufferGraphics.fillOval(game.getNodeXCood(powerPillIndices[i]) * MAG + 4, game.getNodeYCood(powerPillIndices[i]) * MAG + 8, 3, 3);
 	}
 
 	/**
