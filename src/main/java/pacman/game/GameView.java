@@ -342,20 +342,20 @@ public final class GameView extends JComponent {
 			int nodeXCood = game.getNodeXCood(currentNodeIndex);
 			int nodeYCood = game.getNodeYCood(currentNodeIndex);
 
-			if (game.getGhostEdibleTime(ghostType) > 0) {
-				//what is the second clause for????
-				if (game.getGhostEdibleTime(ghostType) < EDIBLE_ALERT && ((time % 6) / 3) == 0)
-					bufferGraphics.drawImage(images.getEdibleGhost(true, time), nodeXCood * MAG - 1, nodeYCood * MAG + 3, null);
-				else
-					bufferGraphics.drawImage(images.getEdibleGhost(false, time), nodeXCood * MAG - 1, nodeYCood * MAG + 3, null);
-			} else {
+//			if (game.getGhostEdibleTime(ghostType) > 0) {
+//				//what is the second clause for????
+//				if (game.getGhostEdibleTime(ghostType) < EDIBLE_ALERT && ((time % 6) / 3) == 0)
+//					bufferGraphics.drawImage(images.getEdibleGhost(true, time), nodeXCood * MAG - 1, nodeYCood * MAG + 3, null);
+//				else
+//					bufferGraphics.drawImage(images.getEdibleGhost(false, time), nodeXCood * MAG - 1, nodeYCood * MAG + 3, null);
+//			} else {
 				int index = ghostType.ordinal();
 
 				if (game.getGhostLairTime(ghostType) > 0)
 					bufferGraphics.drawImage(images.getGhost(ghostType, game.getGhostLastMoveMade(ghostType), time), nodeXCood * MAG - 1 + (index * 5), nodeYCood * MAG + 3, null);
 				else
 					bufferGraphics.drawImage(images.getGhost(ghostType, game.getGhostLastMoveMade(ghostType), time), nodeXCood * MAG - 1, nodeYCood * MAG + 3, null);
-			}
+			//}
 		}
 	}
 
