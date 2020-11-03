@@ -732,18 +732,18 @@ public final class Game {
 			int distance = getShortestPathDistance(pacman.currentNodeIndex, ghost.currentNodeIndex);
 
 			if (distance <= EAT_DISTANCE && distance != -1) {
-				if (ghost.edibleTime > 0)                                    //pac-man eats ghost
-				{
-					score += GHOST_EAT_SCORE * ghostEatMultiplier;
-					ghostEatMultiplier *= 2;
-					ghost.edibleTime = 0;
-					ghost.lairTime = (int) (COMMON_LAIR_TIME * (Math.pow(LAIR_REDUCTION, levelCount % LEVEL_RESET_REDUCTION)));
-					ghost.currentNodeIndex = currentMaze.lairNodeIndex;
-					ghost.lastMoveMade = MOVE.NEUTRAL;
-
-					ghostsEaten.put(ghost.type, true);
-				} else                                                    //ghost eats pac-man
-				{
+//				if (ghost.edibleTime > 0)                                    //pac-man eats ghost
+//				{
+//					score += GHOST_EAT_SCORE * ghostEatMultiplier;
+//					ghostEatMultiplier *= 2;
+//					ghost.edibleTime = 0;
+//					ghost.lairTime = (int) (COMMON_LAIR_TIME * (Math.pow(LAIR_REDUCTION, levelCount % LEVEL_RESET_REDUCTION)));
+//					ghost.currentNodeIndex = currentMaze.lairNodeIndex;
+//					ghost.lastMoveMade = MOVE.NEUTRAL;
+//
+//					ghostsEaten.put(ghost.type, true);
+//				} else                                                    //ghost eats pac-man
+//				{
 					pacman.numberOfLivesRemaining--;
 					pacmanWasEaten = true;
 
@@ -753,7 +753,7 @@ public final class Game {
 						_levelReset();
 
 					return;
-				}
+				//}
 			}
 		}
 		for (Ghost ghost : ghosts.values())
