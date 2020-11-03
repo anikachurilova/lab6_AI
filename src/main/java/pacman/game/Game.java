@@ -679,7 +679,7 @@ public final class Game {
 		int powerPillIndex = currentMaze.graph[pacman.currentNodeIndex].powerPillIndex;
 
 		if (powerPillIndex >= 0 && powerPills.get(powerPillIndex)) {
-			score += POWER_PILL;
+			score += 1;
 			ghostEatMultiplier = 1;
 			powerPills.clear(powerPillIndex);
 
